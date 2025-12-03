@@ -15,7 +15,11 @@ namespace Flux
         Application();
         virtual ~Application() = default;
         void Run();
-        void pushLayer(std::unique_ptr<Layer> layer);
+        void SetMenubarCallback(std::function<void()> callback);
+
+        float GetTime() const;
+
+        void PushLayer(std::unique_ptr<Layer> layer);
         void Close();
 
     private:
@@ -27,6 +31,10 @@ namespace Flux
         GLFWwindow *m_WindowHandle = nullptr;
         std::vector<std::unique_ptr<Layer>> m_LayerStack;
         std::function<void()> m_MenubarCallback;
+
+        float m_TimeStep = 0.0f;
+        float m_FrameTime = 0.0f;
+        float m_LastFrameTime = 0.0f;
     };
     std::unique_ptr<Application> CreateApplication();
 }

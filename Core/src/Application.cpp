@@ -1,4 +1,5 @@
 ﻿#include "Application.hpp"
+#include <glm/glm.hpp>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 namespace Flux
@@ -11,17 +12,19 @@ namespace Flux
     void Application::Run()
     {
         m_Running = true;
-        while (m_Running)
+        while (!glfwWindowShouldClose(m_WindowHandle) && m_Running)
         {
-            if (glfwWindowShouldClose(m_WindowHandle))
-                m_Running = false;
+
+            float time = GetTime();
+            m_FrameTime = time - m_LastFrameTime;
+            m_TimeStep = glm::min<float>(m_FrameTime, 0.0333f);
+            m_LastFrameTime = time;
 
             glClearColor(0.1f, 0.3f, 0.3f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
-
             for (auto &layer : m_LayerStack)
             {
-                layer->OnUpdate(0.016f);
+                layer->OnUpdate(m_TimeStep);
             }
 
             ImGui_ImplOpenGL3_NewFrame();
@@ -86,7 +89,6 @@ namespace Flux
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-            // 添加多视口支持处理
             ImGuiIO &io = ImGui::GetIO();
             if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
             {
@@ -103,7 +105,17 @@ namespace Flux
         Shutdown();
     }
 
-    void Application::pushLayer(std::unique_ptr<Layer> layer)
+    void Application::SetMenubarCallback(std::function<void()> callback)
+    {
+        m_MenubarCallback = callback;
+    }
+
+    float Application::GetTime() const
+    {
+        return static_cast<float>(glfwGetTime());
+    }
+
+    void Application::PushLayer(std::unique_ptr<Layer> layer)
     {
         layer->OnAttach();
         m_LayerStack.push_back(std::move(layer));
