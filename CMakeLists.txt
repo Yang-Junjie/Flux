@@ -14,9 +14,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${BIN_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${BIN_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL ${BIN_DIR})
 
-add_subdirectory(Core/external/glm)
-add_subdirectory(Core/external/GLFW)
+add_subdirectory(Flux/external/glm)
+add_subdirectory(Flux/external/GLFW)
 
-add_subdirectory(Core)
+add_subdirectory(Flux)
 
 add_subdirectory(Application)

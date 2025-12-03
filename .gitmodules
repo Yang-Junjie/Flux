@@ -1,10 +1,10 @@
-[submodule "Core/external/GLFW"]
-	path = Core/external/GLFW
+[submodule "Flux/external/GLFW"]
+	path = Flux/external/GLFW
 	url = https://github.com/glfw/glfw.git
-[submodule "Core/external/imgui"]
-	path = Core/external/imgui
+[submodule "Flux/external/imgui"]
+	path = Flux/external/imgui
 	url = https://github.com/ocornut/imgui.git
 	branch = docking
-[submodule "Core/external/glm"]
-	path = Core/external/glm
+[submodule "Flux/external/glm"]
+	path = Flux/external/glm
 	url = https://github.com/g-truc/glm.git
