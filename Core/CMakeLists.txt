@@ -14,8 +14,9 @@ set(THIRD_PARTY_SOURCES
     ${EXTERNAL_DIR}/imgui/imgui_draw.cpp
     ${EXTERNAL_DIR}/imgui/imgui_tables.cpp
     ${EXTERNAL_DIR}/imgui/imgui_widgets.cpp
-    ${IMGUI_PLATFORM_SOURCE}
+    # ${IMGUI_PLATFORM_SOURCE}
     ${EXTERNAL_DIR}/imgui/backends/imgui_impl_opengl3.cpp
+    ${EXTERNAL_DIR}/imgui/backends/imgui_impl_glfw.cpp
 
     ${EXTERNAL_DIR}/stb_image/stb_image.cpp
 

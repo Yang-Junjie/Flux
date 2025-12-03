@@ -1,9 +1,12 @@
 ﻿#pragma once
 #include "Layer.hpp"
+
+#include <imgui.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <memory>
 #include <vector>
+#include <functional>
 namespace Flux
 {
     class Application
@@ -23,6 +26,7 @@ namespace Flux
         bool m_Running = false;
         GLFWwindow *m_WindowHandle = nullptr;
         std::vector<std::unique_ptr<Layer>> m_LayerStack;
+        std::function<void()> m_MenubarCallback;
     };
     std::unique_ptr<Application> CreateApplication();
 }
