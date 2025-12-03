@@ -1,0 +1,10 @@
+[submodule "Core/external/GLFW"]
+	path = Core/external/GLFW
+	url = https://github.com/glfw/glfw.git
+[submodule "Core/external/imgui"]
+	path = Core/external/imgui
+	url = https://github.com/ocornut/imgui.git
+	branch = docking
+[submodule "Core/external/glm"]
+	path = Core/external/glm
+	url = https://github.com/g-truc/glm.git
