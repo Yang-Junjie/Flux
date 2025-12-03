@@ -128,4 +128,3 @@ std::unique_ptr<Flux::Application> Flux::CreateApplication()
 本项目中使用的第三方库（GLFW、glm、Dear ImGui、stb_image 等）的许可证文件位于 `Flux/external/` 对应目录下，请在实际项目中遵守相关开源协议。
 
 当前仓库更侧重于学习和快速原型搭建，如需在生产环境中使用，建议根据自身需求调整目录结构、构建脚本以及平台相关配置。
-分离

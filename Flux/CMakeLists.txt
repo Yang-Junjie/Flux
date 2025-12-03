@@ -38,5 +38,17 @@ target_include_directories(FluxCore PUBLIC
     ${EXTERNAL_DIR}/GLAD/include
 )
 
-target_link_libraries(FluxCore PRIVATE glfw)
-target_link_libraries(FluxCore PRIVATE opengl32)
+
+if(WIN32)
+    target_link_libraries(FluxCore PRIVATE opengl32 glfw)
+elseif(APPLE)
+    find_library(COCOA_LIBRARY Cocoa)
+    find_library(IOKIT_LIBRARY IOKit)
+    find_library(COREVIDEO_LIBRARY CoreVideo)
+    find_library(OPENGL_LIBRARY OpenGL)
+    target_link_libraries(FluxCore PRIVATE ${OPENGL_LIBRARY} glfw ${COCOA_LIBRARY} ${IOKIT_LIBRARY} ${COREVIDEO_LIBRARY})
+else()
+    find_package(OpenGL REQUIRED)
+    target_link_libraries(FluxCore PRIVATE ${OPENGL_LIBRARIES} glfw pthread X11 Xrandr Xi Xxf86vm Xcursor dl)
+endif()
+
