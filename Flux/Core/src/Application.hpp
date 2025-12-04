@@ -7,12 +7,19 @@
 #include <memory>
 #include <vector>
 #include <functional>
+#include <string>
 namespace Flux
 {
+    struct ApplicationSpecification
+    {
+        std::string Name = "Walnut App";
+        uint32_t Width = 800;
+        uint32_t Height = 600;
+    };
     class Application
     {
     public:
-        Application();
+        explicit Application(const ApplicationSpecification &spec = ApplicationSpecification());
         virtual ~Application() = default;
         void Run();
         void SetMenubarCallback(std::function<void()> callback);
@@ -27,6 +34,7 @@ namespace Flux
         void Shutdown();
 
     private:
+        ApplicationSpecification m_Specification;
         bool m_Running = false;
         GLFWwindow *m_WindowHandle = nullptr;
         std::vector<std::unique_ptr<Layer>> m_LayerStack;

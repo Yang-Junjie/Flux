@@ -4,7 +4,8 @@
 #include <backends/imgui_impl_opengl3.h>
 namespace Flux
 {
-    Application::Application()
+    Application::Application(const ApplicationSpecification &spec):
+    m_Specification(spec)
     {
         Init();
     }
@@ -68,7 +69,7 @@ namespace Flux
                 ImGuiIO &io = ImGui::GetIO();
                 if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
                 {
-                    ImGuiID dockspace_id = ImGui::GetID("VulkanAppDockspace");
+                    ImGuiID dockspace_id = ImGui::GetID("DockSpace");
                     ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
                 }
 
@@ -138,7 +139,7 @@ namespace Flux
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        m_WindowHandle = glfwCreateWindow(800, 600, "Flux Application", nullptr, nullptr);
+        m_WindowHandle = glfwCreateWindow(m_Specification.Width, m_Specification.Height, m_Specification.Name.c_str(), nullptr, nullptr);
         if (!m_WindowHandle)
         {
             glfwTerminate();

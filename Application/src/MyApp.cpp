@@ -16,7 +16,7 @@ public:
 class MyApp : public Flux::Application
 {
 public:
-    MyApp()
+    MyApp(const Flux::ApplicationSpecification& spec): Flux::Application(spec)
     {
         PushLayer(std::make_unique<MyLayer>());
         SetMenubarCallback([this]()
@@ -35,5 +35,9 @@ public:
 };
 std::unique_ptr<Flux::Application> Flux::CreateApplication()
 {
-    return std::make_unique<MyApp>();
+    Flux::ApplicationSpecification spec;
+    spec.Name = "MyApp";
+    spec.Width = 1280;
+    spec.Height = 720;
+    return std::make_unique<MyApp>(spec);
 }
