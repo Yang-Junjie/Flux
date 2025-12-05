@@ -22,11 +22,13 @@ namespace Flux
         explicit Application(const ApplicationSpecification &spec = ApplicationSpecification());
         virtual ~Application() = default;
         void Run();
+        void PushLayer(std::unique_ptr<Layer> layer);
+
         void SetMenubarCallback(std::function<void()> callback);
 
+        GLFWwindow *GetWindowHandle() const { return m_WindowHandle; }
         float GetTime() const;
 
-        void PushLayer(std::unique_ptr<Layer> layer);
         void Close();
 
     private:

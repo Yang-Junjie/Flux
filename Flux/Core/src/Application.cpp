@@ -4,8 +4,7 @@
 #include <backends/imgui_impl_opengl3.h>
 namespace Flux
 {
-    Application::Application(const ApplicationSpecification &spec):
-    m_Specification(spec)
+    Application::Application(const ApplicationSpecification &spec) : m_Specification(spec)
     {
         Init();
     }
