@@ -12,7 +12,7 @@ namespace Flux
 {
     struct ApplicationSpecification
     {
-        std::string Name = "Walnut App";
+        std::string Name = "App";
         uint32_t Width = 800;
         uint32_t Height = 600;
     };
