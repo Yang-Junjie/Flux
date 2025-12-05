@@ -47,6 +47,16 @@ namespace Flux
 
         uint32_t GetColorAttachment() const { return m_TextureID; }
 
+        void CopyFrom(Image &other)
+        {
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, other.GetFramebuffer());
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_FBO);
+            glBlitFramebuffer(0, 0, other.GetWidth(), other.GetHeight(),
+                              0, 0, m_Width, m_Height,
+                              GL_COLOR_BUFFER_BIT, GL_NEAREST);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
+
         uint32_t GetWidth() const { return m_Width; }
         uint32_t GetHeight() const { return m_Height; }
 
