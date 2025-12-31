@@ -6,7 +6,8 @@ set(BIN_DIR ${CMAKE_SOURCE_DIR}/bin CACHE PATH "Output directory for binaries")
 file(MAKE_DIRECTORY ${BIN_DIR})
 
 # default to not building examples
-option(FLUX_BUILD_EXAMPLES "Build Flux example applications" OFF)
+option(FLUX_BUILD_EXAMPLES "Build Flux example applications" ON)
+
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BIN_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${BIN_DIR})
@@ -20,5 +21,5 @@ add_subdirectory(Flux/external/GLFW)
 add_subdirectory(Flux)
 
 if(FLUX_BUILD_EXAMPLES)
-    add_subdirectory(Application)
+    add_subdirectory(example/DesktopApplication)
 endif()
