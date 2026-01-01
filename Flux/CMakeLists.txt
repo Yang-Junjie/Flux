@@ -4,8 +4,20 @@ set(EXTERNAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external)
 # -------- Core Sources --------
 set(CORE_SOURCES
         ${CORE_DIR}/src/EntryPoint.cpp
-        ${CORE_DIR}/src/Application.cpp
+        ${CORE_DIR}/src/ApplicationCommon.cpp
 )
+
+if(ANDROID)
+    list(APPEND CORE_SOURCES
+            ${CORE_DIR}/src/ApplicationAndroid.cpp
+            ${CORE_DIR}/src/ImageAndroid.cpp
+    )
+else()
+    list(APPEND CORE_SOURCES
+            ${CORE_DIR}/src/ApplicationDesktop.cpp
+            ${CORE_DIR}/src/ImageDesktop.cpp
+    )
+endif()
 
 # -------- Third Party Sources --------
 if(ANDROID)
