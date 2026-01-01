@@ -35,6 +35,7 @@ namespace Flux {
     private:
         void Init();
         void Shutdown();
+        void HandleAndroidCommand(int32_t command);
 
         ApplicationSpecification m_Specification;
         bool m_Running = false;

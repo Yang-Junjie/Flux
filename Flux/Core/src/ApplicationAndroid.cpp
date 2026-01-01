@@ -4,6 +4,7 @@
 
 #include <android/log.h>
 #include <android_native_app_glue.h>
+#include <android/native_window.h>
 #include <backends/imgui_impl_android.h>
 #include <backends/imgui_impl_opengl3.h>
 #include <EGL/egl.h>
@@ -20,10 +21,54 @@ namespace Flux {
         EGLDisplay Display = EGL_NO_DISPLAY;
         EGLSurface Surface = EGL_NO_SURFACE;
         EGLContext Context = EGL_NO_CONTEXT;
+        EGLConfig Config = nullptr;
+        EGLint Format = 0;
         bool SoftKeyboardVisible = false;
+        bool SurfaceReady = false;
+        bool ImGuiPlatformReady = false;
     };
 
     namespace {
+        void DestroySurface(Application::PlatformState& state)
+        {
+            if (state.Display != EGL_NO_DISPLAY)
+                eglMakeCurrent(state.Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+
+            if (state.Surface != EGL_NO_SURFACE)
+            {
+                eglDestroySurface(state.Display, state.Surface);
+                state.Surface = EGL_NO_SURFACE;
+            }
+
+            state.SurfaceReady = false;
+        }
+
+        bool CreateSurface(Application::PlatformState& state)
+        {
+            if (state.Display == EGL_NO_DISPLAY || state.Context == EGL_NO_CONTEXT || !state.Window || state.Config == nullptr)
+                return false;
+
+            ANativeWindow_setBuffersGeometry(state.Window, 0, 0, state.Format);
+
+            state.Surface = eglCreateWindowSurface(state.Display, state.Config, state.Window, nullptr);
+            if (state.Surface == EGL_NO_SURFACE)
+            {
+                __android_log_print(ANDROID_LOG_ERROR, "FluxCore", "Failed to create EGL window surface");
+                return false;
+            }
+
+            if (eglMakeCurrent(state.Display, state.Surface, state.Surface, state.Context) != EGL_TRUE)
+            {
+                __android_log_print(ANDROID_LOG_ERROR, "FluxCore", "eglMakeCurrent failed during surface creation");
+                eglDestroySurface(state.Display, state.Surface);
+                state.Surface = EGL_NO_SURFACE;
+                return false;
+            }
+
+            state.SurfaceReady = true;
+            return true;
+        }
+
         bool InitEGL(Application::PlatformState& state) {
             if (!state.Window)
                 return false;
@@ -58,9 +103,11 @@ namespace Flux {
 
             EGLConfig egl_config;
             eglChooseConfig(state.Display, egl_attributes, &egl_config, 1, &num_configs);
+            state.Config = egl_config;
 
             EGLint egl_format;
             eglGetConfigAttrib(state.Display, egl_config, EGL_NATIVE_VISUAL_ID, &egl_format);
+            state.Format = egl_format;
             ANativeWindow_setBuffersGeometry(state.Window, 0, 0, egl_format);
 
             const EGLint context_attributes[] = {
@@ -74,14 +121,7 @@ namespace Flux {
                 return false;
             }
 
-            state.Surface = eglCreateWindowSurface(state.Display, egl_config, state.Window, nullptr);
-            if (state.Surface == EGL_NO_SURFACE) {
-                __android_log_print(ANDROID_LOG_ERROR, "FluxCore", "eglCreateWindowSurface failed");
-                return false;
-            }
-
-            if (eglMakeCurrent(state.Display, state.Surface, state.Surface, state.Context) != EGL_TRUE) {
-                __android_log_print(ANDROID_LOG_ERROR, "FluxCore", "eglMakeCurrent failed");
+            if (!CreateSurface(state)) {
                 return false;
             }
 
@@ -205,7 +245,18 @@ namespace Flux {
             return;
         }
 
+        m_Platform->App->userData = this;
+        m_Platform->App->onAppCmd = [](android_app* app, int32_t cmd)
+        {
+            auto* application = reinterpret_cast<Application*>(app->userData);
+            if (application)
+                application->HandleAndroidCommand(cmd);
+        };
+
         m_Platform->Window = m_Platform->App->window;
+        if (m_Platform->Window)
+            ANativeWindow_acquire(m_Platform->Window);
+
         if (!InitEGL(*m_Platform))
             return;
 
@@ -229,6 +280,7 @@ namespace Flux {
         style.TouchExtraPadding = ImVec2(6, 6);
 
         ImGui_ImplAndroid_Init(m_Platform->Window);
+        m_Platform->ImGuiPlatformReady = true;
         ImGui_ImplOpenGL3_Init("#version 300 es");
     }
 
@@ -241,14 +293,19 @@ namespace Flux {
             int events;
             android_poll_source* source;
             int pollResult;
+            int timeout = (m_Platform->SurfaceReady && m_Platform->ImGuiPlatformReady) ? 0 : -1;
             do {
-                pollResult = ALooper_pollOnce(0, nullptr, &events, reinterpret_cast<void**>(&source));
+                pollResult = ALooper_pollOnce(timeout, nullptr, &events, reinterpret_cast<void**>(&source));
                 if (source)
                     source->process(m_Platform->App, source);
+                timeout = 0;
             } while (pollResult >= 0);
 
             if (m_Platform->App->destroyRequested)
                 m_Running = false;
+
+            if (!m_Platform->SurfaceReady || !m_Platform->ImGuiPlatformReady)
+                continue;
 
             float time = GetTime();
             m_FrameTime = time - m_LastFrameTime;
@@ -319,19 +376,32 @@ namespace Flux {
         m_LayerStack.clear();
 
         ImGui_ImplOpenGL3_Shutdown();
-        ImGui_ImplAndroid_Shutdown();
+        if (m_Platform && m_Platform->ImGuiPlatformReady) {
+            ImGui_ImplAndroid_Shutdown();
+            m_Platform->ImGuiPlatformReady = false;
+        }
         ImGui::DestroyContext();
 
         if (m_Platform) {
+            if (m_Platform->App) {
+                m_Platform->App->onAppCmd = nullptr;
+                m_Platform->App->userData = nullptr;
+            }
+
+            DestroySurface(*m_Platform);
+
             if (m_Platform->Display != EGL_NO_DISPLAY) {
                 eglMakeCurrent(m_Platform->Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 
                 if (m_Platform->Context != EGL_NO_CONTEXT)
                     eglDestroyContext(m_Platform->Display, m_Platform->Context);
-                if (m_Platform->Surface != EGL_NO_SURFACE)
-                    eglDestroySurface(m_Platform->Display, m_Platform->Surface);
 
                 eglTerminate(m_Platform->Display);
+            }
+
+            if (m_Platform->Window) {
+                ANativeWindow_release(m_Platform->Window);
+                m_Platform->Window = nullptr;
             }
         }
 
@@ -348,6 +418,60 @@ namespace Flux {
         timespec now{};
         clock_gettime(CLOCK_MONOTONIC, &now);
         return now.tv_sec + now.tv_nsec * 1e-9f;
+    }
+
+    void Application::HandleAndroidCommand(int32_t command)
+    {
+        if (!m_Platform)
+            return;
+
+        switch (command)
+        {
+        case APP_CMD_INIT_WINDOW:
+            if (!m_Platform->App || !m_Platform->App->window)
+                break;
+
+            if (m_Platform->Window)
+                ANativeWindow_release(m_Platform->Window);
+
+            m_Platform->Window = m_Platform->App->window;
+            ANativeWindow_acquire(m_Platform->Window);
+
+            if (m_Platform->Display == EGL_NO_DISPLAY || m_Platform->Context == EGL_NO_CONTEXT)
+            {
+                if (!InitEGL(*m_Platform))
+                    __android_log_print(ANDROID_LOG_ERROR, "FluxCore", "Failed to initialize EGL on window init");
+            }
+            else
+            {
+                DestroySurface(*m_Platform);
+                if (!CreateSurface(*m_Platform))
+                    __android_log_print(ANDROID_LOG_ERROR, "FluxCore", "Failed to recreate EGL surface");
+            }
+
+            if (!m_Platform->ImGuiPlatformReady)
+            {
+                ImGui_ImplAndroid_Init(m_Platform->Window);
+                m_Platform->ImGuiPlatformReady = true;
+            }
+            break;
+        case APP_CMD_TERM_WINDOW:
+            if (m_Platform->ImGuiPlatformReady)
+            {
+                ImGui_ImplAndroid_Shutdown();
+                m_Platform->ImGuiPlatformReady = false;
+            }
+            m_Platform->SoftKeyboardVisible = false;
+            DestroySurface(*m_Platform);
+            if (m_Platform->Window)
+            {
+                ANativeWindow_release(m_Platform->Window);
+                m_Platform->Window = nullptr;
+            }
+            break;
+        default:
+            break;
+        }
     }
 
 } // namespace Flux
