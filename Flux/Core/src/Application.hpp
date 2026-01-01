@@ -30,7 +30,8 @@ namespace Flux {
         void* GetNativeWindow() const;
         float GetTime() const;
         void Close();
-
+    public:
+        struct PlatformState;
     private:
         void Init();
         void Shutdown();
@@ -46,7 +47,7 @@ namespace Flux {
         float m_LastFrameTime = 0.0f;
         float m_UIScale = 1.0f;
 
-        struct PlatformState;
+      
         std::unique_ptr<PlatformState> m_Platform;
     };
 
