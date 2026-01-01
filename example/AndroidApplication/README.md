@@ -17,7 +17,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Painter">
+        android:theme="@style/Theme.example">
 
         <!-- 使用 NativeActivity -->
         <activity
@@ -32,7 +32,7 @@
             </intent-filter>
 
             <!-- 告诉 NativeActivity 需要加载的 so -->
-            <meta-data android:name="android.app.lib_name" android:value="painter"/>
+            <meta-data android:name="android.app.lib_name" android:value="example"/>
         </activity>
     </application>
 

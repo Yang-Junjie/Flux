@@ -1,5 +1,5 @@
+#include "ExampleLayer.hpp"
 #include "Flux/Core/src/Application.hpp"
-#include "PainterLayer.hpp"
 
 #ifdef ANDROID
 
@@ -10,15 +10,15 @@ extern struct android_app *g_AndroidApp;
 
 namespace Flux {
 
-    std::unique_ptr<Application> CreateApplication() {
-        ApplicationSpecification spec;
-        spec.Name = "ExampleApp";
+std::unique_ptr<Application> CreateApplication() {
+  ApplicationSpecification spec;
+  spec.Name = "ExampleApp";
 #ifdef ANDROID
-        spec.AndroidApp = g_AndroidApp;
+  spec.AndroidApp = g_AndroidApp;
 #endif
-        auto app = std::make_unique<Application>(spec);
-        app->PushLayer(std::make_unique<ExampleLayer>());
-        return app;
-    }
+  auto app = std::make_unique<Application>(spec);
+  app->PushLayer(std::make_unique<ExampleLayer>());
+  return app;
+}
 
 } // namespace Flux
