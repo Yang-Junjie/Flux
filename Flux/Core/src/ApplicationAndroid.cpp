@@ -304,6 +304,11 @@ namespace Flux {
         ImGuiStyle& style = ImGui::GetStyle();
         style.ScaleAllSizes(m_UIScale);
         style.TouchExtraPadding = ImVec2(6, 6);
+        style.ScrollbarSize = 18.0f * m_UIScale;
+        style.GrabMinSize = 20.0f * m_UIScale;
+        style.WindowBorderSize = 4.0f;
+        style.FrameBorderSize = 2.0f;
+        style.WindowRounding = 4.0f;
 
         ImGui_ImplAndroid_Init(m_Platform->Window);
         m_Platform->ImGuiPlatformReady = true;
