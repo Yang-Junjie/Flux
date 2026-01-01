@@ -12,6 +12,12 @@
 #include <imgui.h>
 #include <jni.h>
 #include <time.h>
+#include <filesystem>
+#include <system_error>
+#include <cstdio>
+#include <cerrno>
+
+namespace fs = std::filesystem;
 
 namespace Flux {
 
@@ -26,6 +32,7 @@ namespace Flux {
         bool SoftKeyboardVisible = false;
         bool SurfaceReady = false;
         bool ImGuiPlatformReady = false;
+        std::string IniFilePath;
     };
 
     namespace {
@@ -274,6 +281,25 @@ namespace Flux {
             m_UIScale = 2.0f;
 
         io.FontGlobalScale = m_UIScale;
+
+        const fs::path iniDirectory = "/storage/emulated/0/Beisent/OxygenCrate";
+        std::error_code dirError;
+        fs::create_directories(iniDirectory, dirError);
+        if (dirError)
+            __android_log_print(ANDROID_LOG_WARN, "FluxCore", "Failed to ensure ini directory: %s (%d)", dirError.message().c_str(), dirError.value());
+
+        m_Platform->IniFilePath = (iniDirectory / "imgui.ini").string();
+        io.IniFilename = m_Platform->IniFilePath.c_str();
+
+        if (FILE* iniFile = std::fopen(m_Platform->IniFilePath.c_str(), "ab+"))
+        {
+            std::fclose(iniFile);
+            __android_log_print(ANDROID_LOG_INFO, "FluxCore", "ImGui ini path set to %s", m_Platform->IniFilePath.c_str());
+        }
+        else
+        {
+            __android_log_print(ANDROID_LOG_ERROR, "FluxCore", "Failed to access ini file at %s (errno=%d)", m_Platform->IniFilePath.c_str(), errno);
+        }
 
         ImGuiStyle& style = ImGui::GetStyle();
         style.ScaleAllSizes(m_UIScale);
