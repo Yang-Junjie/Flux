@@ -9,6 +9,7 @@
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
 #include <imgui.h>
+#include <jni.h>
 #include <time.h>
 
 namespace Flux {
@@ -19,6 +20,7 @@ namespace Flux {
         EGLDisplay Display = EGL_NO_DISPLAY;
         EGLSurface Surface = EGL_NO_SURFACE;
         EGLContext Context = EGL_NO_CONTEXT;
+        bool SoftKeyboardVisible = false;
     };
 
     namespace {
@@ -85,6 +87,103 @@ namespace Flux {
 
             eglSwapInterval(state.Display, 1);
             return true;
+        }
+
+        struct JniEnvScope
+        {
+            JNIEnv* Env = nullptr;
+            JavaVM* Vm = nullptr;
+            bool Attached = false;
+        };
+
+        bool AcquireJniEnv(android_app* app, JniEnvScope& scope)
+        {
+            if (!app || !app->activity || !app->activity->vm)
+                return false;
+
+            scope.Vm = app->activity->vm;
+            jint status = scope.Vm->GetEnv(reinterpret_cast<void**>(&scope.Env), JNI_VERSION_1_6);
+            if (status == JNI_EDETACHED)
+            {
+                if (scope.Vm->AttachCurrentThread(&scope.Env, nullptr) != JNI_OK)
+                    return false;
+                scope.Attached = true;
+            }
+            else if (status != JNI_OK)
+            {
+                return false;
+            }
+            return scope.Env != nullptr;
+        }
+
+        void ReleaseJniEnv(JniEnvScope& scope)
+        {
+            if (scope.Attached && scope.Vm)
+                scope.Vm->DetachCurrentThread();
+            scope.Env = nullptr;
+            scope.Vm = nullptr;
+            scope.Attached = false;
+        }
+
+        void ToggleSoftKeyboard(android_app* app, bool show)
+        {
+            if (!app || !app->activity || !app->activity->clazz)
+                return;
+
+            JniEnvScope scope;
+            if (!AcquireJniEnv(app, scope))
+                return;
+
+            jclass activityClass = scope.Env->GetObjectClass(app->activity->clazz);
+            if (activityClass)
+            {
+                const char* methodName = show ? "showSoftInput" : "hideSoftInput";
+                jmethodID methodId = scope.Env->GetMethodID(activityClass, methodName, "()V");
+                if (methodId)
+                    scope.Env->CallVoidMethod(app->activity->clazz, methodId);
+                scope.Env->DeleteLocalRef(activityClass);
+            }
+
+            if (scope.Env && scope.Env->ExceptionCheck())
+                scope.Env->ExceptionClear();
+
+            ReleaseJniEnv(scope);
+        }
+
+        void PollUnicodeCharacters(android_app* app)
+        {
+            if (!app || !app->activity || !app->activity->clazz)
+                return;
+
+            JniEnvScope scope;
+            if (!AcquireJniEnv(app, scope))
+                return;
+
+            jclass activityClass = scope.Env->GetObjectClass(app->activity->clazz);
+            if (!activityClass)
+            {
+                ReleaseJniEnv(scope);
+                return;
+            }
+
+            jmethodID pollMethod = scope.Env->GetMethodID(activityClass, "pollUnicodeChar", "()I");
+            if (!pollMethod)
+            {
+                scope.Env->DeleteLocalRef(activityClass);
+                ReleaseJniEnv(scope);
+                return;
+            }
+
+            ImGuiIO& io = ImGui::GetIO();
+            jint unicodeCharacter = 0;
+            while ((unicodeCharacter = scope.Env->CallIntMethod(app->activity->clazz, pollMethod)) != 0)
+                io.AddInputCharacter(static_cast<unsigned int>(unicodeCharacter));
+
+            if (scope.Env->ExceptionCheck())
+                scope.Env->ExceptionClear();
+
+            scope.Env->DeleteLocalRef(activityClass);
+            ReleaseJniEnv(scope);
         }
     } // namespace
 
@@ -161,6 +260,20 @@ namespace Flux {
 
             for (auto& layer : m_LayerStack)
                 layer->OnUpdate(m_TimeStep);
+
+            PollUnicodeCharacters(m_Platform->App);
+
+            ImGuiIO& io = ImGui::GetIO();
+            if (io.WantTextInput && !m_Platform->SoftKeyboardVisible)
+            {
+                ToggleSoftKeyboard(m_Platform->App, true);
+                m_Platform->SoftKeyboardVisible = true;
+            }
+            else if (!io.WantTextInput && m_Platform->SoftKeyboardVisible)
+            {
+                ToggleSoftKeyboard(m_Platform->App, false);
+                m_Platform->SoftKeyboardVisible = false;
+            }
 
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplAndroid_NewFrame();
