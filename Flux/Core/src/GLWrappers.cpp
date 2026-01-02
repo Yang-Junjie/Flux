@@ -30,6 +30,13 @@ uint32_t CreateBuffer(uint32_t target, std::size_t size, const void* data, uint3
     return id;
 }
 
+void UpdateBufferData(uint32_t buffer, uint32_t target, std::size_t size, const void* data, uint32_t usage) {
+    if (buffer == 0)
+        return;
+    glBindBuffer(target, buffer);
+    glBufferData(target, static_cast<GLsizeiptr>(size), data, usage);
+}
+
 void DeleteBuffer(uint32_t buffer) {
     GLuint id = static_cast<GLuint>(buffer);
     if (id != 0)

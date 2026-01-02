@@ -14,6 +14,7 @@
 namespace Flux::GL {
 
 uint32_t CreateBuffer(uint32_t target, std::size_t size, const void* data, uint32_t usage);
+void UpdateBufferData(uint32_t buffer, uint32_t target, std::size_t size, const void* data, uint32_t usage);
 void DeleteBuffer(uint32_t buffer);
 void BindBuffer(uint32_t target, uint32_t buffer);
 
