@@ -9,14 +9,30 @@
 
 class MyLayer : public flux::Layer {
  public:
+  MyLayer() : Layer("MyLayer") {}
+
   void OnAttach() override {}
   void OnDetach() override {}
-  void OnUpdate(float dt) override {}
+
+  void OnUpdate(flux::TimeStep ts) override {
+    // Update logic here
+  }
+
   void OnRenderUI() override {
     ImGui::Begin("Hello, Flux!");
     ImGui::Text("This is a sample layer in MyApp.");
+    ImGui::Text("Frame time: %.3f ms", ImGui::GetIO().Framerate);
     ImGui::End();
     ImGui::ShowDemoWindow();
+  }
+
+  void OnEvent(flux::Event& event) override {
+    flux::EventDispatcher dispatcher(event);
+    dispatcher.Dispatch<flux::KeyPressedEvent>(
+        [this](flux::KeyPressedEvent& e) {
+          // Handle key press
+          return false;
+        });
   }
 };
 
@@ -43,5 +59,12 @@ std::unique_ptr<flux::Application> flux::CreateApplication() {
   spec.name = "MyApp";
   spec.width = 1280;
   spec.height = 720;
+  spec.clear_color[0] = 0.1f;
+  spec.clear_color[1] = 0.1f;
+  spec.clear_color[2] = 0.15f;
+  spec.clear_color[3] = 1.0f;
+  spec.vsync = true;
+  spec.msaa_samples = 4;
+  spec.resizable = true;
   return std::make_unique<MyApp>(spec);
 }
