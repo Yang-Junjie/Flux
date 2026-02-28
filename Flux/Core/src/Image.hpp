@@ -1,30 +1,39 @@
-#pragma once
+// Copyright 2026 Beisent
+// Image class for texture and framebuffer management
+
+#ifndef FLUX_CORE_SRC_IMAGE_HPP_
+#define FLUX_CORE_SRC_IMAGE_HPP_
 
 #include <cstdint>
 
-namespace Flux {
+namespace flux
+{
 
-    class Image {
-    public:
-        Image(uint32_t width, uint32_t height);
-        ~Image();
+  class Image
+  {
+  public:
+    Image(uint32_t width, uint32_t height);
+    ~Image();
 
-        void SetData(const void* data);
+    // Disable copy and assign
+    Image(const Image &) = delete;
+    Image &operator=(const Image &) = delete;
 
-        uint32_t GetFramebuffer() const { return m_FBO; }
-        uint32_t GetColorAttachment() const { return m_TextureID; }
+    void SetData(const void *data);
+    void CopyFrom(Image &other);
 
-        void CopyFrom(Image& other);
+    uint32_t framebuffer() const { return fbo_; }
+    uint32_t color_attachment() const { return texture_id_; }
+    uint32_t width() const { return width_; }
+    uint32_t height() const { return height_; }
 
-        uint32_t GetWidth() const { return m_Width; }
-        uint32_t GetHeight() const { return m_Height; }
+  private:
+    uint32_t width_ = 0;
+    uint32_t height_ = 0;
+    uint32_t fbo_ = 0;
+    uint32_t texture_id_ = 0;
+  };
 
-    private:
-        uint32_t m_Width = 0;
-        uint32_t m_Height = 0;
-        uint32_t m_FBO = 0;
-        uint32_t m_TextureID = 0;
-    };
+} // namespace flux
 
-} // namespace Flux
-
+#endif // FLUX_CORE_SRC_IMAGE_HPP_

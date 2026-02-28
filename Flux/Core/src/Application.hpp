@@ -1,6 +1,8 @@
-﻿#pragma once
+﻿// Copyright 2026 Beisent
+// Application class for Flux framework
 
-#include "Layer.hpp"
+#ifndef FLUX_CORE_SRC_APPLICATION_HPP_
+#define FLUX_CORE_SRC_APPLICATION_HPP_
 
 #include <cstdint>
 #include <functional>
@@ -8,50 +10,61 @@
 #include <string>
 #include <vector>
 
-namespace Flux {
+#include "Layer.hpp"
 
-    struct ApplicationSpecification {
-        std::string Name = "App";
-        uint32_t Width = 800;
-        uint32_t Height = 600;
-        void* PlatformContext = nullptr;
-        float ImGuiUIScale = 0.0f;
-    };
+namespace flux
+{
 
-    class Application {
-    public:
-        explicit Application(const ApplicationSpecification& spec = ApplicationSpecification());
-        virtual ~Application();
+  struct ApplicationSpecification
+  {
+    std::string name = "App";
+    uint32_t width = 800;
+    uint32_t height = 600;
+    void *platform_context = nullptr;
+    float imgui_ui_scale = 0.0f;
+  };
 
-        void Run();
-        void PushLayer(std::unique_ptr<Layer> layer);
-        void SetMenubarCallback(std::function<void()> callback);
+  class Application
+  {
+  public:
+    explicit Application(
+        const ApplicationSpecification &spec = ApplicationSpecification());
+    virtual ~Application();
 
-        void* GetNativeWindow() const;
-        float GetTime() const;
-        void Close();
-    public:
-        struct PlatformState;
-    private:
-        void Init();
-        void Shutdown();
-        void HandleAndroidCommand(int32_t command);
+    // Disable copy and assign
+    Application(const Application &) = delete;
+    Application &operator=(const Application &) = delete;
 
-        ApplicationSpecification m_Specification;
-        bool m_Running = false;
+    void Run();
+    void PushLayer(std::unique_ptr<Layer> layer);
+    void SetMenubarCallback(std::function<void()> callback);
 
-        std::vector<std::unique_ptr<Layer>> m_LayerStack;
-        std::function<void()> m_MenubarCallback;
+    void *GetNativeWindow() const;
+    float GetTime() const;
+    void Close();
 
-        float m_TimeStep = 0.0f;
-        float m_FrameTime = 0.0f;
-        float m_LastFrameTime = 0.0f;
-        float m_UIScale = 1.0f;
+    struct PlatformState;
 
-      
-        std::unique_ptr<PlatformState> m_Platform;
-    };
+  private:
+    void Init();
+    void Shutdown();
 
-    std::unique_ptr<Application> CreateApplication();
+    ApplicationSpecification specification_;
+    bool running_ = false;
 
-} // namespace Flux
+    std::vector<std::unique_ptr<Layer>> layer_stack_;
+    std::function<void()> menubar_callback_;
+
+    float time_step_ = 0.0f;
+    float frame_time_ = 0.0f;
+    float last_frame_time_ = 0.0f;
+    float ui_scale_ = 1.0f;
+
+    std::unique_ptr<PlatformState> platform_;
+  };
+
+  std::unique_ptr<Application> CreateApplication();
+
+} // namespace flux
+
+#endif // FLUX_CORE_SRC_APPLICATION_HPP_

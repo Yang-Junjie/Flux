@@ -1,7 +1,11 @@
-﻿#include "Application.hpp"
+﻿// Copyright 2026 Beisent
+// Entry point for Flux applications
+
+#include "Application.hpp"
+
 int main()
 {
-    std::unique_ptr<Flux::Application> app = Flux::CreateApplication();
-    app->Run();
-    return 0;
+  std::unique_ptr<flux::Application> app = flux::CreateApplication();
+  app->Run();
+  return 0;
 }
