@@ -42,6 +42,10 @@ target_include_directories(FluxCore PUBLIC
 # -------- Platform Definitions & Linking --------
 if(WIN32)
     target_link_libraries(FluxCore PRIVATE opengl32 glfw)
+    # 设置 UTF-8 编码支持
+    if(MSVC)
+        target_compile_options(FluxCore PRIVATE /utf-8)
+    endif()
 elseif(APPLE)
     find_library(COCOA_LIBRARY Cocoa)
     find_library(IOKIT_LIBRARY IOKit)

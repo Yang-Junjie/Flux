@@ -103,6 +103,31 @@ namespace flux
 
     ImGui::StyleColorsDark();
 
+    // 加载字体
+    ImFontConfig font_config;
+    font_config.OversampleH = 1;
+    font_config.OversampleV = 1;
+    font_config.PixelSnapH = true;
+
+    // 添加默认字体
+    if (!specification_.imgui_font_path.empty())
+    {
+      io.Fonts->AddFontFromFileTTF(specification_.imgui_font_path.c_str(),
+                                    specification_.imgui_font_size, &font_config);
+    }
+
+    // 添加合并字体（如果启用）
+    if (specification_.imgui_enable_merge_font && !specification_.imgui_merge_font_path.empty())
+    {
+      font_config.MergeMode = true;
+      font_config.GlyphMinAdvanceX = specification_.imgui_merge_font_size;
+
+      // 使用 ImGui 的完整 Unicode 范围（包括 CJK、Cyrillic、Arabic 等）
+      io.Fonts->AddFontFromFileTTF(specification_.imgui_merge_font_path.c_str(),
+                                    specification_.imgui_merge_font_size, &font_config,
+                                    io.Fonts->GetGlyphRangesChineseFull());
+    }
+
     ImGui_ImplGlfw_InitForOpenGL(platform_->window_handle, true);
     ImGui_ImplOpenGL3_Init("#version 430");
   }

@@ -2,7 +2,7 @@
 project(Flux)
 
 # default to not building examples
-option(FLUX_BUILD_EXAMPLES "Build Flux example applications" OFF)
+option(FLUX_BUILD_EXAMPLES "Build Flux example applications" ON)
 
 set(BIN_DIR ${CMAKE_SOURCE_DIR}/bin CACHE PATH "Output directory for binaries")
 

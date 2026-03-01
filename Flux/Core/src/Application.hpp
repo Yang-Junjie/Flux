@@ -34,12 +34,18 @@ namespace flux
     bool decorated = true;
     bool maximized = false;
 
-    // ImGui configuration
+
     float imgui_ui_scale = 0.0f;
     bool imgui_docking_enabled = true;
     bool imgui_viewports_enabled = true;
 
-    // Platform-specific
+    std::string imgui_font_path = "";
+    float imgui_font_size = 16.0f;
+
+    std::string imgui_merge_font_path = "";
+    float imgui_merge_font_size = 16.0f;
+
+    bool imgui_enable_merge_font = false;
     void *platform_context = nullptr;
   };
 

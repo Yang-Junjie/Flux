@@ -3,3 +3,4 @@ build
 *.ini
 .idea
 cmake-build-debug
+.claude/
