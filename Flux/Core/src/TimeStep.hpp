@@ -7,19 +7,19 @@
 namespace flux
 {
 
-  class TimeStep
-  {
-  public:
-    TimeStep(float time = 0.0f) : time_(time) {}
+    class TimeStep
+    {
+    public:
+        constexpr TimeStep(float time = 0.0f) : time_(time) {}
 
-    operator float() const { return time_; }
+        constexpr operator float() const { return time_; }
 
-    float GetSeconds() const { return time_; }
-    float GetMilliseconds() const { return time_ * 1000.0f; }
+        [[nodiscard]] constexpr float GetSeconds() const { return time_; }
+        [[nodiscard]] constexpr float GetMilliseconds() const { return time_ * 1000.0f; }
 
-  private:
-    float time_;
-  };
+    private:
+        float time_;
+    };
 
 } // namespace flux
 

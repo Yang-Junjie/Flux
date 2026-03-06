@@ -1,4 +1,4 @@
-﻿// Copyright 2026 Beisent
+// Copyright 2026 Beisent
 // Application class for Flux framework
 
 #ifndef FLUX_CORE_SRC_APPLICATION_HPP_
@@ -8,6 +8,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "Event.hpp"
@@ -17,98 +18,97 @@
 namespace flux
 {
 
-  struct ApplicationSpecification
-  {
-    std::string name = "App";
-    uint32_t width = 800;
-    uint32_t height = 600;
-
-    // Rendering configuration
-    float clear_color[4] = {0.1f, 0.1f, 0.1f, 1.0f};
-    bool vsync = true;
-    int msaa_samples = 0; // 0 = disabled, 2/4/8/16 = enabled
-
-    // Window configuration
-    bool fullscreen = false;
-    bool resizable = true;
-    bool decorated = true;
-    bool maximized = false;
-
-
-    float imgui_ui_scale = 0.0f;
-    bool imgui_docking_enabled = true;
-    bool imgui_viewports_enabled = true;
-
-    std::string imgui_font_path = "";
-    float imgui_font_size = 16.0f;
-
-    std::string imgui_merge_font_path = "";
-    float imgui_merge_font_size = 16.0f;
-
-    bool imgui_enable_merge_font = false;
-    void *platform_context = nullptr;
-  };
-
-  class Application
-  {
-  public:
-    explicit Application(
-        const ApplicationSpecification &spec = ApplicationSpecification());
-    virtual ~Application();
-
-    // Disable copy and assign
-    Application(const Application &) = delete;
-    Application &operator=(const Application &) = delete;
-
-    void Run();
-
-    // Layer management with ownership control
-    void PushLayer(std::unique_ptr<Layer> layer);
-    void PushOverlay(std::unique_ptr<Layer> overlay);
-    void PopLayer(Layer *layer);
-    Layer *GetLayer(size_t index);
-    Layer *GetLayerByName(const std::string &name);
-    size_t GetLayerCount() const { return layer_stack_.size(); }
-
-    void SetMenubarCallback(std::function<void()> callback);
-
-    void *GetNativeWindow() const;
-    float GetTime() const;
-    void Close();
-
-    const ApplicationSpecification &GetSpecification() const
+    struct ApplicationSpecification
     {
-      return specification_;
-    }
+        std::string name = "App";
+        uint32_t width = 800;
+        uint32_t height = 600;
 
-    struct PlatformState;
+        // Rendering configuration
+        float clear_color[4] = {0.1f, 0.1f, 0.1f, 1.0f};
+        bool vsync = true;
+        int msaa_samples = 0; // 0 = disabled, 2/4/8/16 = enabled
 
-  private:
-    void Init();
-    void Shutdown();
-    void OnEvent(Event &e);
-    bool OnWindowClose(WindowCloseEvent &e);
-    bool OnWindowResize(WindowResizeEvent &e);
+        // Window configuration
+        bool fullscreen = false;
+        bool resizable = true;
+        bool decorated = true;
+        bool maximized = false;
 
-    void SetupEventCallbacks();
+        float imgui_ui_scale = 0.0f;
+        bool imgui_docking_enabled = true;
+        bool imgui_viewports_enabled = true;
 
-    ApplicationSpecification specification_;
-    bool running_ = false;
-    bool minimized_ = false;
+        std::string imgui_font_path;
+        float imgui_font_size = 16.0f;
 
-    std::vector<std::unique_ptr<Layer>> layer_stack_;
-    size_t layer_insert_index_ = 0;
-    std::function<void()> menubar_callback_;
+        std::string imgui_merge_font_path;
+        float imgui_merge_font_size = 16.0f;
 
-    float time_step_ = 0.0f;
-    float frame_time_ = 0.0f;
-    float last_frame_time_ = 0.0f;
-    float ui_scale_ = 1.0f;
+        bool imgui_enable_merge_font = false;
+        void *platform_context = nullptr;
+    };
 
-    std::unique_ptr<PlatformState> platform_;
-  };
+    class Application
+    {
+    public:
+        explicit Application(
+            const ApplicationSpecification &spec = ApplicationSpecification());
+        virtual ~Application();
 
-  std::unique_ptr<Application> CreateApplication();
+        // Disable copy and assign
+        Application(const Application &) = delete;
+        Application &operator=(const Application &) = delete;
+
+        void Run();
+
+        // Layer management with ownership control
+        void PushLayer(std::unique_ptr<Layer> layer);
+        void PushOverlay(std::unique_ptr<Layer> overlay);
+        void PopLayer(Layer *layer);
+        [[nodiscard]] Layer *GetLayer(size_t index);
+        [[nodiscard]] Layer *GetLayerByName(std::string_view name);
+        [[nodiscard]] size_t GetLayerCount() const { return layer_stack_.size(); }
+
+        void SetMenubarCallback(std::function<void()> callback);
+
+        [[nodiscard]] void *GetNativeWindow() const;
+        [[nodiscard]] float GetTime() const;
+        void Close();
+
+        [[nodiscard]] const ApplicationSpecification &GetSpecification() const
+        {
+            return specification_;
+        }
+
+        struct PlatformState;
+
+    private:
+        void Init();
+        void Shutdown();
+        void OnEvent(Event &e);
+        bool OnWindowClose(WindowCloseEvent &e);
+        bool OnWindowResize(WindowResizeEvent &e);
+
+        void SetupEventCallbacks();
+
+        ApplicationSpecification specification_;
+        bool running_ = false;
+        bool minimized_ = false;
+
+        std::vector<std::unique_ptr<Layer>> layer_stack_;
+        size_t layer_insert_index_ = 0;
+        std::function<void()> menubar_callback_;
+
+        float time_step_ = 0.0f;
+        float frame_time_ = 0.0f;
+        float last_frame_time_ = 0.0f;
+        float ui_scale_ = 1.0f;
+
+        std::unique_ptr<PlatformState> platform_;
+    };
+
+    std::unique_ptr<Application> CreateApplication();
 
 } // namespace flux
 

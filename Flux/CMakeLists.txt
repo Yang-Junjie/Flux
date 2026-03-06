@@ -5,7 +5,6 @@ set(EXTERNAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external)
 set(CORE_SOURCES
         ${CORE_DIR}/src/EntryPoint.cpp
         ${CORE_DIR}/src/Application.cpp
-        ${CORE_DIR}/src/Image.cpp
 )
 
 # -------- Third Party Sources --------
@@ -18,7 +17,6 @@ set(THIRD_PARTY_SOURCES
         ${EXTERNAL_DIR}/GLAD/src/glad.c
         ${EXTERNAL_DIR}/imgui/backends/imgui_impl_opengl3.cpp
         ${EXTERNAL_DIR}/imgui/backends/imgui_impl_glfw.cpp
-        ${EXTERNAL_DIR}/stb_image/stb_image.cpp
 )
 
 set(SOURCES

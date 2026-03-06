@@ -1,6 +1,9 @@
 ﻿cmake_minimum_required(VERSION 3.15)
 project(Flux)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # default to not building examples
 option(FLUX_BUILD_EXAMPLES "Build Flux example applications" OFF)
 
