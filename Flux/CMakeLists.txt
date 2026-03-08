@@ -5,6 +5,8 @@ set(EXTERNAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external)
 set(CORE_SOURCES
         ${CORE_DIR}/src/EntryPoint.cpp
         ${CORE_DIR}/src/Application.cpp
+        ${CORE_DIR}/src/Event.cpp
+        ${CORE_DIR}/src/Window.cpp
 )
 
 # -------- Third Party Sources --------

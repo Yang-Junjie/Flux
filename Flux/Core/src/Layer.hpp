@@ -4,32 +4,40 @@
 #ifndef FLUX_CORE_SRC_LAYER_HPP_
 #define FLUX_CORE_SRC_LAYER_HPP_
 
-#include <string>
-#include <string_view>
-
 #include "Event.hpp"
 #include "TimeStep.hpp"
 
-namespace flux
-{
+#include <string>
+#include <string_view>
 
-    class Layer
+namespace flux {
+
+class Layer {
+public:
+    explicit Layer(std::string_view name = "Layer")
+        : debug_name_(name)
+    {}
+
+    virtual ~Layer() = default;
+
+    virtual void OnAttach() {}
+
+    virtual void OnDetach() {}
+
+    virtual void OnUpdate(TimeStep ts) {}
+
+    virtual void OnRenderUI() {}
+
+    virtual void OnEvent(Event& event) {}
+
+    [[nodiscard]] const std::string& GetName() const
     {
-    public:
-        explicit Layer(std::string_view name = "Layer") : debug_name_(name) {}
-        virtual ~Layer() = default;
+        return debug_name_;
+    }
 
-        virtual void OnAttach() {}
-        virtual void OnDetach() {}
-        virtual void OnUpdate(TimeStep ts) {}
-        virtual void OnRenderUI() {}
-        virtual void OnEvent(Event &event) {}
-
-        [[nodiscard]] const std::string &GetName() const { return debug_name_; }
-
-    protected:
-        std::string debug_name_;
-    };
+protected:
+    std::string debug_name_;
+};
 
 } // namespace flux
 

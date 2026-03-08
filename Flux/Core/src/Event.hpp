@@ -5,266 +5,283 @@
 #define FLUX_CORE_SRC_EVENT_HPP_
 
 #include <cstdint>
-#include <functional>
+
 #include <string>
 
-namespace flux
-{
+namespace flux {
 
-    enum class EventType
+enum class EventType {
+    None = 0,
+    WindowClose,
+    WindowResize,
+    WindowFocus,
+    WindowLostFocus,
+    WindowMoved,
+    KeyPressed,
+    KeyReleased,
+    KeyTyped,
+    MouseButtonPressed,
+    MouseButtonReleased,
+    MouseMoved,
+    MouseScrolled
+};
+
+enum EventCategory {
+    None = 0,
+    EventCategoryApplication = 1 << 0,
+    EventCategoryInput = 1 << 1,
+    EventCategoryKeyboard = 1 << 2,
+    EventCategoryMouse = 1 << 3,
+    EventCategoryMouseButton = 1 << 4
+};
+
+#define EVENT_CLASS_TYPE(type)                                    \
+    [[nodiscard]] static EventType GetStaticType()                \
+    {                                                             \
+        return EventType::type;                                   \
+    }                                                             \
+    [[nodiscard]] virtual EventType GetEventType() const override \
+    {                                                             \
+        return GetStaticType();                                   \
+    }                                                             \
+    [[nodiscard]] virtual const char* GetName() const override    \
+    {                                                             \
+        return #type;                                             \
+    }
+
+#define EVENT_CLASS_CATEGORY(category)                          \
+    [[nodiscard]] virtual int GetCategoryFlags() const override \
+    {                                                           \
+        return category;                                        \
+    }
+
+class Event {
+public:
+    virtual ~Event() = default;
+
+    bool handled = false;
+
+    [[nodiscard]] virtual EventType GetEventType() const = 0;
+    [[nodiscard]] virtual const char* GetName() const = 0;
+    [[nodiscard]] virtual int GetCategoryFlags() const = 0;
+
+    [[nodiscard]] virtual std::string ToString() const
     {
-        None = 0,
-        WindowClose,
-        WindowResize,
-        WindowFocus,
-        WindowLostFocus,
-        WindowMoved,
-        KeyPressed,
-        KeyReleased,
-        KeyTyped,
-        MouseButtonPressed,
-        MouseButtonReleased,
-        MouseMoved,
-        MouseScrolled
-    };
+        return GetName();
+    }
 
-    enum EventCategory
+    [[nodiscard]] bool IsInCategory(EventCategory category) const
     {
-        None = 0,
-        EventCategoryApplication = 1 << 0,
-        EventCategoryInput = 1 << 1,
-        EventCategoryKeyboard = 1 << 2,
-        EventCategoryMouse = 1 << 3,
-        EventCategoryMouseButton = 1 << 4
-    };
+        return GetCategoryFlags() & category;
+    }
+};
 
-#define EVENT_CLASS_TYPE(type)                                                                  \
-    [[nodiscard]] static EventType GetStaticType() { return EventType::type; }                  \
-    [[nodiscard]] virtual EventType GetEventType() const override { return GetStaticType(); }   \
-    [[nodiscard]] virtual const char *GetName() const override { return #type; }
+class EventDispatcher {
+public:
+    explicit EventDispatcher(Event& event)
+        : event_(event)
+    {}
 
-#define EVENT_CLASS_CATEGORY(category)                                                          \
-    [[nodiscard]] virtual int GetCategoryFlags() const override { return category; }
-
-    class Event
+    template <typename T, typename F>
+    bool Dispatch(const F& func)
     {
-    public:
-        virtual ~Event() = default;
-
-        bool handled = false;
-
-        [[nodiscard]] virtual EventType GetEventType() const = 0;
-        [[nodiscard]] virtual const char *GetName() const = 0;
-        [[nodiscard]] virtual int GetCategoryFlags() const = 0;
-        [[nodiscard]] virtual std::string ToString() const { return GetName(); }
-
-        [[nodiscard]] bool IsInCategory(EventCategory category) const
-        {
-            return GetCategoryFlags() & category;
+        if (event_.GetEventType() == T::GetStaticType()) {
+            event_.handled |= func(static_cast<T&>(event_));
+            return true;
         }
-    };
+        return false;
+    }
 
-    class EventDispatcher
+private:
+    Event& event_;
+};
+
+// Window Events
+class WindowResizeEvent : public Event {
+public:
+    WindowResizeEvent(uint32_t width, uint32_t height)
+        : width_(width),
+          height_(height)
+    {}
+
+    [[nodiscard]] uint32_t GetWidth() const
     {
-    public:
-        explicit EventDispatcher(Event &event) : event_(event) {}
+        return width_;
+    }
 
-        template <typename T, typename F>
-        bool Dispatch(const F &func)
-        {
-            if (event_.GetEventType() == T::GetStaticType())
-            {
-                event_.handled |= func(static_cast<T &>(event_));
-                return true;
-            }
-            return false;
-        }
-
-    private:
-        Event &event_;
-    };
-
-    // Window Events
-    class WindowResizeEvent : public Event
+    [[nodiscard]] uint32_t GetHeight() const
     {
-    public:
-        WindowResizeEvent(uint32_t width, uint32_t height)
-            : width_(width), height_(height)
-        {
-        }
+        return height_;
+    }
 
-        [[nodiscard]] uint32_t GetWidth() const { return width_; }
-        [[nodiscard]] uint32_t GetHeight() const { return height_; }
+    [[nodiscard]] std::string ToString() const override;
 
-        [[nodiscard]] std::string ToString() const override
-        {
-            return "WindowResizeEvent: " + std::to_string(width_) + ", " +
-                   std::to_string(height_);
-        }
+    EVENT_CLASS_TYPE(WindowResize)
+    EVENT_CLASS_CATEGORY(EventCategoryApplication)
 
-        EVENT_CLASS_TYPE(WindowResize)
-        EVENT_CLASS_CATEGORY(EventCategoryApplication)
+private:
+    uint32_t width_, height_;
+};
 
-    private:
-        uint32_t width_, height_;
-    };
+class WindowCloseEvent : public Event {
+public:
+    WindowCloseEvent() = default;
 
-    class WindowCloseEvent : public Event
+    EVENT_CLASS_TYPE(WindowClose)
+    EVENT_CLASS_CATEGORY(EventCategoryApplication)
+};
+
+// Key Events
+class KeyEvent : public Event {
+public:
+    [[nodiscard]] int GetKeyCode() const
     {
-    public:
-        WindowCloseEvent() = default;
+        return key_code_;
+    }
 
-        EVENT_CLASS_TYPE(WindowClose)
-        EVENT_CLASS_CATEGORY(EventCategoryApplication)
-    };
+    EVENT_CLASS_CATEGORY(EventCategoryKeyboard | EventCategoryInput)
 
-    // Key Events
-    class KeyEvent : public Event
+protected:
+    explicit KeyEvent(int keycode)
+        : key_code_(keycode)
+    {}
+
+    int key_code_;
+};
+
+class KeyPressedEvent : public KeyEvent {
+public:
+    KeyPressedEvent(int keycode, int repeat_count)
+        : KeyEvent(keycode),
+          repeat_count_(repeat_count)
+    {}
+
+    [[nodiscard]] int GetRepeatCount() const
     {
-    public:
-        [[nodiscard]] int GetKeyCode() const { return key_code_; }
+        return repeat_count_;
+    }
 
-        EVENT_CLASS_CATEGORY(EventCategoryKeyboard | EventCategoryInput)
+    [[nodiscard]] std::string ToString() const override;
 
-    protected:
-        explicit KeyEvent(int keycode) : key_code_(keycode) {}
+    EVENT_CLASS_TYPE(KeyPressed)
 
-        int key_code_;
-    };
+private:
+    int repeat_count_;
+};
 
-    class KeyPressedEvent : public KeyEvent
+class KeyReleasedEvent : public KeyEvent {
+public:
+    explicit KeyReleasedEvent(int keycode)
+        : KeyEvent(keycode)
+    {}
+
+    [[nodiscard]] std::string ToString() const override;
+
+    EVENT_CLASS_TYPE(KeyReleased)
+};
+
+class KeyTypedEvent : public KeyEvent {
+public:
+    explicit KeyTypedEvent(int keycode)
+        : KeyEvent(keycode)
+    {}
+
+    [[nodiscard]] std::string ToString() const override;
+
+    EVENT_CLASS_TYPE(KeyTyped)
+};
+
+// Mouse Events
+class MouseMovedEvent : public Event {
+public:
+    MouseMovedEvent(float x, float y)
+        : mouse_x_(x),
+          mouse_y_(y)
+    {}
+
+    [[nodiscard]] float GetX() const
     {
-    public:
-        KeyPressedEvent(int keycode, int repeat_count)
-            : KeyEvent(keycode), repeat_count_(repeat_count)
-        {
-        }
+        return mouse_x_;
+    }
 
-        [[nodiscard]] int GetRepeatCount() const { return repeat_count_; }
-
-        [[nodiscard]] std::string ToString() const override
-        {
-            return "KeyPressedEvent: " + std::to_string(key_code_) +
-                   " (" + std::to_string(repeat_count_) + " repeats)";
-        }
-
-        EVENT_CLASS_TYPE(KeyPressed)
-
-    private:
-        int repeat_count_;
-    };
-
-    class KeyReleasedEvent : public KeyEvent
+    [[nodiscard]] float GetY() const
     {
-    public:
-        explicit KeyReleasedEvent(int keycode) : KeyEvent(keycode) {}
+        return mouse_y_;
+    }
 
-        [[nodiscard]] std::string ToString() const override
-        {
-            return "KeyReleasedEvent: " + std::to_string(key_code_);
-        }
+    [[nodiscard]] std::string ToString() const override;
 
-        EVENT_CLASS_TYPE(KeyReleased)
-    };
+    EVENT_CLASS_TYPE(MouseMoved)
+    EVENT_CLASS_CATEGORY(EventCategoryMouse | EventCategoryInput)
 
-    class KeyTypedEvent : public KeyEvent
+private:
+    float mouse_x_, mouse_y_;
+};
+
+class MouseScrolledEvent : public Event {
+public:
+    MouseScrolledEvent(float x_offset, float y_offset)
+        : x_offset_(x_offset),
+          y_offset_(y_offset)
+    {}
+
+    [[nodiscard]] float GetXOffset() const
     {
-    public:
-        explicit KeyTypedEvent(int keycode) : KeyEvent(keycode) {}
+        return x_offset_;
+    }
 
-        [[nodiscard]] std::string ToString() const override
-        {
-            return "KeyTypedEvent: " + std::to_string(key_code_);
-        }
-
-        EVENT_CLASS_TYPE(KeyTyped)
-    };
-
-    // Mouse Events
-    class MouseMovedEvent : public Event
+    [[nodiscard]] float GetYOffset() const
     {
-    public:
-        MouseMovedEvent(float x, float y) : mouse_x_(x), mouse_y_(y) {}
+        return y_offset_;
+    }
 
-        [[nodiscard]] float GetX() const { return mouse_x_; }
-        [[nodiscard]] float GetY() const { return mouse_y_; }
+    [[nodiscard]] std::string ToString() const override;
 
-        [[nodiscard]] std::string ToString() const override
-        {
-            return "MouseMovedEvent: " + std::to_string(mouse_x_) + ", " +
-                   std::to_string(mouse_y_);
-        }
+    EVENT_CLASS_TYPE(MouseScrolled)
+    EVENT_CLASS_CATEGORY(EventCategoryMouse | EventCategoryInput)
 
-        EVENT_CLASS_TYPE(MouseMoved)
-        EVENT_CLASS_CATEGORY(EventCategoryMouse | EventCategoryInput)
+private:
+    float x_offset_, y_offset_;
+};
 
-    private:
-        float mouse_x_, mouse_y_;
-    };
-
-    class MouseScrolledEvent : public Event
+class MouseButtonEvent : public Event {
+public:
+    [[nodiscard]] int GetMouseButton() const
     {
-    public:
-        MouseScrolledEvent(float x_offset, float y_offset)
-            : x_offset_(x_offset), y_offset_(y_offset)
-        {
-        }
+        return button_;
+    }
 
-        [[nodiscard]] float GetXOffset() const { return x_offset_; }
-        [[nodiscard]] float GetYOffset() const { return y_offset_; }
+    EVENT_CLASS_CATEGORY(EventCategoryMouse | EventCategoryInput | EventCategoryMouseButton)
 
-        [[nodiscard]] std::string ToString() const override
-        {
-            return "MouseScrolledEvent: " + std::to_string(x_offset_) + ", " +
-                   std::to_string(y_offset_);
-        }
+protected:
+    explicit MouseButtonEvent(int button)
+        : button_(button)
+    {}
 
-        EVENT_CLASS_TYPE(MouseScrolled)
-        EVENT_CLASS_CATEGORY(EventCategoryMouse | EventCategoryInput)
+    int button_;
+};
 
-    private:
-        float x_offset_, y_offset_;
-    };
+class MouseButtonPressedEvent : public MouseButtonEvent {
+public:
+    explicit MouseButtonPressedEvent(int button)
+        : MouseButtonEvent(button)
+    {}
 
-    class MouseButtonEvent : public Event
-    {
-    public:
-        [[nodiscard]] int GetMouseButton() const { return button_; }
+    [[nodiscard]] std::string ToString() const override;
 
-        EVENT_CLASS_CATEGORY(EventCategoryMouse | EventCategoryInput |
-                             EventCategoryMouseButton)
+    EVENT_CLASS_TYPE(MouseButtonPressed)
+};
 
-    protected:
-        explicit MouseButtonEvent(int button) : button_(button) {}
+class MouseButtonReleasedEvent : public MouseButtonEvent {
+public:
+    explicit MouseButtonReleasedEvent(int button)
+        : MouseButtonEvent(button)
+    {}
 
-        int button_;
-    };
+    [[nodiscard]] std::string ToString() const override;
 
-    class MouseButtonPressedEvent : public MouseButtonEvent
-    {
-    public:
-        explicit MouseButtonPressedEvent(int button) : MouseButtonEvent(button) {}
-
-        [[nodiscard]] std::string ToString() const override
-        {
-            return "MouseButtonPressedEvent: " + std::to_string(button_);
-        }
-
-        EVENT_CLASS_TYPE(MouseButtonPressed)
-    };
-
-    class MouseButtonReleasedEvent : public MouseButtonEvent
-    {
-    public:
-        explicit MouseButtonReleasedEvent(int button) : MouseButtonEvent(button) {}
-
-        [[nodiscard]] std::string ToString() const override
-        {
-            return "MouseButtonReleasedEvent: " + std::to_string(button_);
-        }
-
-        EVENT_CLASS_TYPE(MouseButtonReleased)
-    };
+    EVENT_CLASS_TYPE(MouseButtonReleased)
+};
 
 } // namespace flux
 

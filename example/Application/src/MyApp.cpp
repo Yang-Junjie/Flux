@@ -56,15 +56,15 @@ public:
 
 std::unique_ptr<flux::Application> flux::CreateApplication() {
     flux::ApplicationSpecification spec;
-    spec.name = "MyApp";
-    spec.width = 1280;
-    spec.height = 720;
+    spec.window.title = "MyApp";
+    spec.window.width = 1280;
+    spec.window.height = 720;
     spec.clear_color[0] = 0.1f;
     spec.clear_color[1] = 0.1f;
     spec.clear_color[2] = 0.15f;
     spec.clear_color[3] = 1.0f;
-    spec.vsync = true;
-    spec.msaa_samples = 4;
-    spec.resizable = true;
+    spec.window.vsync = true;
+    spec.window.msaa_samples = 4;
+    spec.window.resizable = true;
     return std::make_unique<MyApp>(spec);
 }
