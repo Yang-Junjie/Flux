@@ -31,7 +31,7 @@ void Window::Init()
     }
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, spec_.resizable ? GLFW_TRUE : GLFW_FALSE);
     glfwWindowHint(GLFW_DECORATED, spec_.decorated ? GLFW_TRUE : GLFW_FALSE);
@@ -43,8 +43,7 @@ void Window::Init()
 
     GLFWmonitor* monitor = spec_.fullscreen ? glfwGetPrimaryMonitor() : nullptr;
 
-    window_ = glfwCreateWindow(
-        spec_.width, spec_.height, spec_.title.c_str(), monitor, nullptr);
+    window_ = glfwCreateWindow(spec_.width, spec_.height, spec_.title.c_str(), monitor, nullptr);
 
     if (!window_) {
         glfwTerminate();
@@ -83,21 +82,17 @@ void Window::SetupCallbacks()
         data.event_callback(event);
     });
 
-    glfwSetWindowSizeCallback(window_,
-                              [](GLFWwindow* window, int width, int height) {
-                                  auto& data = *static_cast<WindowData*>(
-                                      glfwGetWindowUserPointer(window));
-                                  data.width = width;
-                                  data.height = height;
-                                  WindowResizeEvent event(width, height);
-                                  data.event_callback(event);
-                              });
+    glfwSetWindowSizeCallback(window_, [](GLFWwindow* window, int width, int height) {
+        auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+        data.width = width;
+        data.height = height;
+        WindowResizeEvent event(width, height);
+        data.event_callback(event);
+    });
 
     glfwSetKeyCallback(window_,
-                       [](GLFWwindow* window, int key, int scancode,
-                          int action, int mods) {
-                           auto& data = *static_cast<WindowData*>(
-                               glfwGetWindowUserPointer(window));
+                       [](GLFWwindow* window, int key, int scancode, int action, int mods) {
+                           auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
                            switch (action) {
                                case GLFW_PRESS: {
                                    KeyPressedEvent event(key, 0);
@@ -123,40 +118,33 @@ void Window::SetupCallbacks()
         data.event_callback(event);
     });
 
-    glfwSetMouseButtonCallback(window_,
-                               [](GLFWwindow* window, int button, int action,
-                                  int mods) {
-                                   auto& data = *static_cast<WindowData*>(
-                                       glfwGetWindowUserPointer(window));
-                                   switch (action) {
-                                       case GLFW_PRESS: {
-                                           MouseButtonPressedEvent event(button);
-                                           data.event_callback(event);
-                                           break;
-                                       }
-                                       case GLFW_RELEASE: {
-                                           MouseButtonReleasedEvent event(button);
-                                           data.event_callback(event);
-                                           break;
-                                       }
-                                   }
-                               });
+    glfwSetMouseButtonCallback(window_, [](GLFWwindow* window, int button, int action, int mods) {
+        auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+        switch (action) {
+            case GLFW_PRESS: {
+                MouseButtonPressedEvent event(button);
+                data.event_callback(event);
+                break;
+            }
+            case GLFW_RELEASE: {
+                MouseButtonReleasedEvent event(button);
+                data.event_callback(event);
+                break;
+            }
+        }
+    });
 
-    glfwSetScrollCallback(
-        window_, [](GLFWwindow* window, double xOffset, double yOffset) {
-            auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
-            MouseScrolledEvent event(static_cast<float>(xOffset),
-                                     static_cast<float>(yOffset));
-            data.event_callback(event);
-        });
+    glfwSetScrollCallback(window_, [](GLFWwindow* window, double xOffset, double yOffset) {
+        auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+        MouseScrolledEvent event(static_cast<float>(xOffset), static_cast<float>(yOffset));
+        data.event_callback(event);
+    });
 
-    glfwSetCursorPosCallback(
-        window_, [](GLFWwindow* window, double xPos, double yPos) {
-            auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
-            MouseMovedEvent event(static_cast<float>(xPos),
-                                  static_cast<float>(yPos));
-            data.event_callback(event);
-        });
+    glfwSetCursorPosCallback(window_, [](GLFWwindow* window, double xPos, double yPos) {
+        auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+        MouseMovedEvent event(static_cast<float>(xPos), static_cast<float>(yPos));
+        data.event_callback(event);
+    });
 }
 
 void Window::SwapBuffers()
